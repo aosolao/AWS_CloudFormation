@@ -1,0 +1,128 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Metadata": {
+        "AWS::CloudFormation::Designer": {
+            "cc894849-9e1a-427b-aae1-ff82ee138276": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": -130,
+                    "y": 90
+                },
+                "z": 0,
+                "embeds": []
+            },
+            "c37fb373-da42-412f-8cbf-d29fbab9d7d4": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": -250,
+                    "y": 90
+                },
+                "z": 0,
+                "embeds": [],
+                "isassociatedwith": [
+                    "cc894849-9e1a-427b-aae1-ff82ee138276"
+                ]
+            }
+        }
+    },
+    "Parameters":{
+        "AMIParameter": {
+            "Description": "AMI to launch instances",
+            "Type": "String"
+        },
+        "InstanceType": {
+                  "Description" : "WebServer EC2 instance type",
+      "Type" : "String",
+      "Default" : "c4.2xlarge",
+      "AllowedValues" : [ "t1.micro", "t2.nano", "t2.micro", "t2.small", "t2.medium", "t2.large", "m1.small", "m1.medium", "m1.large", "m1.xlarge", "m2.xlarge", "m2.2xlarge", "m2.4xlarge", "m3.medium", "m3.large", "m3.xlarge", "m3.2xlarge", "m4.large", "m4.xlarge", "m4.2xlarge", "m4.4xlarge", "m4.10xlarge", "c1.medium", "c1.xlarge", "c3.large", "c3.xlarge", "c3.2xlarge", "c3.4xlarge", "c3.8xlarge", "c4.large", "c4.xlarge", "c4.2xlarge", "c4.4xlarge", "c4.8xlarge", "g2.2xlarge", "g2.8xlarge", "r3.large", "r3.xlarge", "r3.2xlarge", "r3.4xlarge", "r3.8xlarge", "i2.xlarge", "i2.2xlarge", "i2.4xlarge", "i2.8xlarge", "d2.xlarge", "d2.2xlarge", "d2.4xlarge", "d2.8xlarge", "hi1.4xlarge", "hs1.8xlarge", "cr1.8xlarge", "cc2.8xlarge", "cg1.4xlarge"],
+      "ConstraintDescription" : "must be a valid EC2 instance type."
+        },
+        "SecurityGroups": {
+                 "Description" : "Name of an existing SecurityGroup",
+                 "Type": "List<AWS::EC2::SecurityGroup::Id>",
+                 "ConstraintDescription" : "must be the name of an existing SecurityGroup."
+        },
+    "KeyName": {
+      "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instances",
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "ConstraintDescription" : "must be the name of an existing EC2 KeyPair."
+    },
+    "ALBTargetGroup": {
+        "Description" : "Name of an existing EC2 ELB TargetGroup",
+        "Type": "String"
+    },
+    "Subnets" : {
+      "Type" : "List<AWS::EC2::Subnet::Id>",
+      "Description" : "The list of SubnetIds in your Virtual Private Cloud (VPC)",
+      "ConstraintDescription" : "must be a list of at least two existing subnets associated with at least two different availability zones. They should be residing in the selected Virtual Private Cloud."
+    }
+
+    },
+    "Resources": {
+        "LaunchConf": {
+            "Type": "AWS::AutoScaling::LaunchConfiguration",
+            "Properties": {
+                "AssociatePublicIpAddress": false,
+                "ImageId": {
+                    "Ref": "AMIParameter"
+                },
+                "InstanceType": {
+                    "Ref": "InstanceType"
+                },
+                "SecurityGroups": {
+                    "Ref": "SecurityGroups"
+                },
+                "KeyName": {
+                    "Ref": "KeyName"
+                }
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "cc894849-9e1a-427b-aae1-ff82ee138276"
+                }
+            }
+        },
+        "AutoScaling": {
+            "Type": "AWS::AutoScaling::AutoScalingGroup",
+            "Properties": {
+                "LaunchConfigurationName": {
+                    "Ref": "LaunchConf"
+                },
+                "Cooldown": 300,
+                "TargetGroupARNs": [
+                    {
+                        "Ref": "ALBTargetGroup"
+                    }
+                ],
+                "MinSize": "0",
+                "MaxSize": "100",
+                "VPCZoneIdentifier": {
+                    "Ref": "Subnets"
+                }
+            },
+
+            "UpdatePolicy": {
+                "AutoScalingRollingUpdate": {
+                    "MaxBatchSize": "1",
+                    "MinInstancesInService": "1",
+                    "PauseTime": "PT5M",
+                    "SuspendProcesses": [
+                        "AlarmNotification"
+                    ],
+                    "WaitOnResourceSignals": false
+                }
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "c37fb373-da42-412f-8cbf-d29fbab9d7d4"
+                }
+            }
+        }
+    }
+}
